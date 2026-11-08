@@ -6,15 +6,17 @@
 
 UI::UI()
 {
+    // 原版用 title/122、124、125 三张现代 UI 按钮图，DOS 资源里没有，
+    // 改成文字按钮（TextBox 会补半透明底），否则按钮宽高为 0，既看不见也点不到。
     button_status_ = std::make_shared<Button>();
-    button_status_->setTexture("title", 122);
-    button_status_->setAlpha(192);
+    button_status_->setText("状态");
+    button_status_->setFontSize(20);
     button_item_ = std::make_shared<Button>();
-    button_item_->setTexture("title", 124);
-    button_item_->setAlpha(192);
+    button_item_->setText("物品");
+    button_item_->setFontSize(20);
     button_system_ = std::make_shared<Button>();
-    button_system_->setTexture("title", 125);
-    button_system_->setAlpha(192);
+    button_system_->setText("系统");
+    button_system_->setFontSize(20);
     addChild(button_status_, 10, 10);
     addChild(button_item_, 90, 10);
     addChild(button_system_, 170, 10);
@@ -55,7 +57,9 @@ void UI::onEntrance()
 
 void UI::draw()
 {
-    //Engine::getInstance()->fillColor({ 0, 0, 0, 128 }, 0, 0, -1, -1);
+    // 原版的界面面板自带背景图（title/12x 那批），DOS 资源里没有，
+    // 这里统一压一层半透明黑，保证文字在场景上可读。
+    Engine::getInstance()->fillColor({ 0, 0, 0, 170 }, 0, 0, -1, -1);
 }
 
 void UI::dealEvent(EngineEvent& e)

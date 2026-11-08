@@ -128,10 +128,12 @@ int Font::renderText(const std::string& text, int size, int x, int y, Color colo
         {
             if (c > ' ')
             {
+                // 关键：按 size×size 缩放绘制。原来的 -1,-1 用字形原始尺寸，
+                // 遇到字宽 ≠ size 的字体会压到下一个字上（叠字）。
                 Engine::getInstance()->setColor(tex, { uint8_t(color.r / 10), uint8_t(color.g / 10), uint8_t(color.b / 10), color.a });
-                Engine::getInstance()->renderTexture(tex, x1 + 1, y1, -1, -1);
+                Engine::getInstance()->renderTexture(tex, x1 + 1, y1, size, size);
                 Engine::getInstance()->setColor(tex, color);
-                Engine::getInstance()->renderTexture(tex, x1, y1, -1, -1);
+                Engine::getInstance()->renderTexture(tex, x1, y1, size, size);
             }
         }
         x += w;
@@ -149,8 +151,16 @@ void Font::executeDrawCalls()
 void Font::drawWithBox(const std::string& text, int size, int x, int y, Color color, uint8_t alpha, uint8_t alpha_box)
 {
     auto r = getBoxRect(getTextDrawSize(text), size, x, y);
-    UIRenderer::getInstance()->drawTexture(TextureManager::getInstance()->getTexture("title", 126),
-        r.x, r.y, { { 255, 255, 255, 255 }, alpha_box }, r.w, r.h);
+    auto box = TextureManager::getInstance()->getTexture("title", 126);
+    if (box)
+    {
+        UIRenderer::getInstance()->drawTexture(box, r.x, r.y, { { 255, 255, 255, 255 }, alpha_box }, r.w, r.h);
+    }
+    else
+    {
+        // 资源里没有菜单底板（title/126），用半透明黑底代替，否则浅字压亮背景会看不清
+        UIRenderer::getInstance()->fillColor({ 0, 0, 0, alpha_box }, r.x, r.y, r.w, r.h);
+    }
     draw(text, size, x, y, color, alpha);
 }
 

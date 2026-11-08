@@ -42,9 +42,23 @@ TitleScene::TitleScene()
     battle_mode_ = GameUtil::getInstance()->getInt("game", "battle_mode");
     menu_ = std::make_shared<Menu>();
     menu_->setPosition(560, 550);
-    menu_->addChild<Button>(-180, 0)->setTexture("title", 3, 23, 23);
-    menu_->addChild<Button>(20, 0)->setTexture("title", 4, 24, 24);
-    menu_->addChild<Button>(220, 0)->setTexture("title", 6, 26, 26);
+    // DOS 版素材里没有「新遊戲／讀取進度／離開遊戲」这三张按钮图（原图是舊版的進度選單），
+    // 直接用文字画，避免图文错位。
+    {
+        auto b0 = menu_->addChild<Button>(-180, 0);
+        b0->setText("新 游 戏");
+        b0->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
+    }
+    {
+        auto b1 = menu_->addChild<Button>(20, 0);
+        b1->setText("读 取 进 度");
+        b1->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
+    }
+    {
+        auto b2 = menu_->addChild<Button>(220, 0);
+        b2->setText("离 开 游 戏");
+        b2->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
+    }
     menu_load_ = std::make_shared<UISave>();
     menu_load_->setPosition(500, 300);
     //render_message_ = 1;
@@ -112,7 +126,13 @@ void TitleScene::dealEvent(EngineEvent& e)
     if (r == 0)
     {
         Engine::getInstance()->gameControllerRumble(50, 50, 500);
-        Save::getInstance()->load(0);
+        // 没有默认存档时（用户删了 save/0.db），load 会返回 false，后面 getRole(0) 就是空指针。
+        // 这里提前挡掉，避免直接崩在 0xC0000005。
+        if (!Save::getInstance()->load(0) || Save::getInstance()->getRole(0) == nullptr)
+        {
+            LOG("没有可用的初始存档（save/0.db + allsin.grp + alldef.grp），无法开始新游戏");
+            return;
+        }
         std::string name = "";
         auto input = std::make_shared<InputBox>("請輸入姓名：", 30);
         input->setInputPosition(350, 300);
