@@ -5,6 +5,10 @@
 #include <span>
 #include <system_error>
 
+// 只有 MinGW(MSYS2) 的 libstdc++ 缺这两个符号。
+// macOS/Linux 的 libstdc++/libc++ 自带实现，重复定义会链接冲突，所以整段用平台宏包起来。
+#if defined(_WIN32)
+
 namespace std
 {
     void* __open_terminal(FILE* stream)
@@ -27,3 +31,5 @@ namespace std
         return {};
     }
 }
+
+#endif // _WIN32
