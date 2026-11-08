@@ -11,9 +11,10 @@ protected:
     std::string text_ = "";
     int font_size_ = 20;
     int text_x_ = 0, text_y_ = 0;
-    Color color_normal_ = { 235, 235, 235, 255 };   // 原版是深色字配浅色底板，我们的资源没有那块底板，改浅色
-    Color color_pass_ = { 255, 230, 120, 255 };
-    Color color_press_ = { 255, 200, 80, 255 };
+    // 原版配色：深棕字 + 浅色羊皮纸底板（title/126）。底板我们补上了，颜色保持原样。
+    Color color_normal_ = { 32, 32, 32, 255 };
+    Color color_pass_ = { 200, 40, 30, 255 };
+    Color color_press_ = { 200, 40, 30, 255 };
     bool have_box_ = true;
     bool have_alpha_box_ = false;
     Color outline_color_;

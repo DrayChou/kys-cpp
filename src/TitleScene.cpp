@@ -47,17 +47,17 @@ TitleScene::TitleScene()
     {
         auto b0 = menu_->addChild<Button>(-180, 0);
         b0->setText("新 游 戏");
-        b0->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
+
     }
     {
         auto b1 = menu_->addChild<Button>(20, 0);
         b1->setText("读 取 进 度");
-        b1->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
+
     }
     {
         auto b2 = menu_->addChild<Button>(220, 0);
         b2->setText("离 开 游 戏");
-        b2->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
+
     }
     menu_load_ = std::make_shared<UISave>();
     menu_load_->setPosition(500, 300);

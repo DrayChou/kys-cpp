@@ -31,7 +31,7 @@ UIShop::UIShop()
 
         // 原版用 title/104、105 两张箭头图，DOS 资源里没有，改成文字
         auto button_left = std::make_shared<Button>();
-        text->addChild(button_left, 36 * 12 + 36, 2);
+        text->addChild(button_left, 36 * 12 + 116, 2);
         button_left->setText("<");
         button_left->setFontSize(20);
         button_left->setHaveBox(false);
@@ -39,7 +39,7 @@ UIShop::UIShop()
         buttons_.push_back(button_left);
 
         auto button_right = std::make_shared<Button>();
-        text->addChild(button_right, 36 * 12 + 108, 2);
+        text->addChild(button_right, 36 * 12 + 160, 2);
         button_right->setText(">");
         button_right->setFontSize(20);
         button_right->setHaveBox(false);

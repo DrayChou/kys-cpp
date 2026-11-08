@@ -268,6 +268,33 @@ def make_title_background():
     print("  TITLE.BIG -> title/153.png、154.png（%dx%d）" % (SW, SH))
 
 
+def make_ui_panel():
+    """生成 title/126.png —— 菜单/商店/设置面板的底板。
+
+    原版这张是浅色羊皮纸底，代码里的文字色是深棕 {48,32,16}，属于"深字浅底"。
+    DOS 资源里没有这张图，缺了就只能看到深字压在深色场景上（等于看不见），
+    所以这里用纯色+渐变现画一张浅色底板。
+    """
+    W = H = 64
+    buf = bytearray(W * H * 4)
+    for y in range(H):
+        t = y / (H - 1)
+        # 上浅下深的暖白，尽量接近原版羊皮纸
+        r = int(238 - 18 * t)
+        g = int(230 - 22 * t)
+        b = int(206 - 26 * t)
+        for x in range(W):
+            o = (y * W + x) * 4
+            buf[o] = r
+            buf[o + 1] = g
+            buf[o + 2] = b
+            buf[o + 3] = 255
+    out = os.path.join(OUT, "title")
+    os.makedirs(out, exist_ok=True)
+    write_png(os.path.join(out, "126.png"), W, H, buf)
+    print("  生成 title/126.png（浅色面板底板 %dx%d）" % (W, H))
+
+
 def main():
     global DOS, JYOL, OUT
     ap = argparse.ArgumentParser(description="DOS 版金庸群侠传资源 -> kys-cpp 资源目录")
@@ -309,6 +336,7 @@ def main():
     convert_fights()
 
     make_title_background()
+    make_ui_panel()
 
     print("[3/3] 转换对话")
     convert_talk()
