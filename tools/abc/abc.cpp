@@ -9,6 +9,7 @@
 #include "ZipFile.h"
 #include "filefunc.h"
 #include "strfunc.h"
+#include <map>
 #include <print>
 #include <sqlite3.h>
 
@@ -723,19 +724,51 @@ int expandR(std::string idx, std::string grp, int index, std::string path, bool 
         }
 
         memcpy(&baseinfo_, rgrp2, sizeof(baseinfo16_));
-        filefunc::readDataToVector(rgrp2 + offset32[1], length32[1], roles_);
+        // 角色必须逐字段转换：32 位的 RoleSave 比 16 位多出 InternalID/InternalLevel，
+        // 整块按 2 倍字节拷贝会让 HeadID/属性全部错位（396 != 182*2）。
+        roles_.clear();
+        roles_.resize(roles16_.size());
+        for (size_t i = 0; i < roles16_.size(); i++)
+        {
+            const auto& a = roles16_[i];
+            auto& b = roles_[i];
+            memset(&b, 0, sizeof(RoleSave));
+            b.ID = a.ID;
+            b.HeadID = a.HeadID;
+            b.IncLife = a.IncLife;
+            b.UnUse = a.UnUse;
+            PotConv::fromCP950ToUTF8(a.Name, b.Name);
+            PotConv::fromCP950ToUTF8(a.Nick, b.Nick);
+            b.Sexual = a.Sexual;
+            b.Level = a.Level;
+            b.Exp = a.Exp;
+            b.HP = a.HP;
+            b.MaxHP = a.MaxHP;
+            b.Hurt = a.Hurt;
+            b.Poison = a.Poison;
+            b.PhysicalPower = a.PhysicalPower;
+            b.ExpForMakeItem = a.ExpForMakeItem;
+            b.Equip0 = a.Equip0;
+            b.Equip1 = a.Equip1;
+            for (int k = 0; k < 6; k++) { b.Frame[k] = a.Frame[k]; }
+            b.MPType = a.MPType;
+            b.MP = a.MP;
+            b.MaxMP = a.MaxMP;
+            b.Attack = a.Attack; b.Speed = a.Speed; b.Defence = a.Defence;
+            b.Medicine = a.Medicine; b.UsePoison = a.UsePoison; b.Detoxification = a.Detoxification;
+            b.AntiPoison = a.AntiPoison; b.Fist = a.Fist; b.Sword = a.Sword; b.Knife = a.Knife;
+            b.Unusual = a.Unusual; b.HiddenWeapon = a.HiddenWeapon;
+            b.Knowledge = a.Knowledge; b.Morality = a.Morality; b.AttackWithPoison = a.AttackWithPoison;
+            b.AttackTwice = a.AttackTwice; b.Fame = a.Fame; b.IQ = a.IQ;
+            b.PracticeItem = a.PracticeItem;
+            b.ExpForItem = a.ExpForItem;
+            for (int k = 0; k < ROLE_MAGIC_COUNT; k++) { b.MagicID[k] = a.MagicID[k]; b.MagicLevel[k] = a.MagicLevel[k]; }
+            for (int k = 0; k < ROLE_TAKING_ITEM_COUNT; k++) { b.TakingItem[k] = a.TakingItem[k]; b.TakingItemCount[k] = a.TakingItemCount[k]; }
+        }
         filefunc::readDataToVector(rgrp2 + offset32[2], length32[2], items_);
         filefunc::readDataToVector(rgrp2 + offset32[3], length32[3], submapinfos_);
         filefunc::readDataToVector(rgrp2 + offset32[4], length32[4], magics_);
         filefunc::readDataToVector(rgrp2 + offset32[5], length32[5], shops_);
-        //仅有包含名字的才需要特殊转换
-        for (int i = 0; i < roles_.size(); i++)
-        {
-            memset(roles_[i].Name, 0, sizeof(roles_[i].Name));
-            memset(roles_[i].Nick, 0, sizeof(roles_[i].Nick));
-            PotConv::fromCP950ToUTF8(roles16_[i].Name, roles_[i].Name);
-            PotConv::fromCP950ToUTF8(roles16_[i].Nick, roles_[i].Nick);
-        }
         for (int i = 0; i < items_.size(); i++)
         {
             memset(items_[i].Name, 0, sizeof(items_[i].Name));
@@ -755,7 +788,7 @@ int expandR(std::string idx, std::string grp, int index, std::string path, bool 
         }
         baseinfo_.Encode = 65001;
         memcpy(rgrp2, &baseinfo_, sizeof(baseinfo_));
-        filefunc::writeVectorToData(rgrp2 + offset32[1], length32[1], roles_, sizeof(RoleSave));
+        // roles_ 不写回 rgrp2：396*N > length32[1]，会越界；游戏只读 .db
         filefunc::writeVectorToData(rgrp2 + offset32[2], length32[2], items_, sizeof(ItemSave));
         filefunc::writeVectorToData(rgrp2 + offset32[3], length32[3], submapinfos_, sizeof(SubMapInfoSave));
         filefunc::writeVectorToData(rgrp2 + offset32[4], length32[4], magics_, sizeof(MagicSave));
