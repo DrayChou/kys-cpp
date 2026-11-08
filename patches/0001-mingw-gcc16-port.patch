@@ -1,0 +1,396 @@
+diff --git a/cifa b/cifa
+--- a/cifa
++++ b/cifa
+@@ -1 +1 @@
+-Subproject commit 6dae718a307e590a4928dfc314c1554000773d7d
++Subproject commit 6dae718a307e590a4928dfc314c1554000773d7d-dirty
+diff --git a/others/Hanz2Piny.h b/others/Hanz2Piny.h
+index 12ba373..4c49597 100644
+--- a/others/Hanz2Piny.h
++++ b/others/Hanz2Piny.h
+@@ -3,6 +3,7 @@
+ #ifndef HANZ2PINY_H
+ #define HANZ2PINY_H
+ 
++#include <cstdint>
+ #include <string>
+ #include <vector>
+ 
+diff --git a/src/BattleScene.h b/src/BattleScene.h
+index e7dadfd..e998bf6 100644
+--- a/src/BattleScene.h
++++ b/src/BattleScene.h
+@@ -1,5 +1,6 @@
+ ﻿#pragma once
+ #include "BattleCursor.h"
++#include <cmath>
+ #include "BattleMap.h"
+ #include "BattleMenu.h"
+ #include "Cloud.h"
+diff --git a/src/BattleSceneAct.cpp b/src/BattleSceneAct.cpp
+index d3fa39d..f609032 100644
+--- a/src/BattleSceneAct.cpp
++++ b/src/BattleSceneAct.cpp
+@@ -1,4 +1,5 @@
+ #include "BattleSceneAct.h"
++#include <cmath>
+ #include "GameUtil.h"
+ #include "filefunc.h"
+ #include <limits>
+diff --git a/src/BattleSceneHades.cpp b/src/BattleSceneHades.cpp
+index f3ebe7b..34fb011 100644
+--- a/src/BattleSceneHades.cpp
++++ b/src/BattleSceneHades.cpp
+@@ -1,5 +1,6 @@
+ ﻿#include "BattleSceneHades.h"
+ #include "Audio.h"
++#include <cmath>
+ #include "Event.h"
+ #include "Font.h"
+ #include "GameUtil.h"
+diff --git a/src/BattleSceneSekiro.cpp b/src/BattleSceneSekiro.cpp
+index cd6ac8e..cfe7c32 100644
+--- a/src/BattleSceneSekiro.cpp
++++ b/src/BattleSceneSekiro.cpp
+@@ -1,5 +1,6 @@
+ ﻿#include "BattleSceneSekiro.h"
+ #include "Audio.h"
++#include <cmath>
+ #include "Event.h"
+ #include "GameUtil.h"
+ #include "MainScene.h"
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 8c72cd6..7df71e0 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -73,6 +73,9 @@ file(GLOB SRC_LIST
+     )
+ 
+ set(LINK_LIBRARIES SDL3 SDL3_ttf SDL3_image SDL3_mixer sqlite3 yaml-cpp)
++if (MINGW)
++    set(LINK_LIBRARIES ${LINK_LIBRARIES} iconv)
++endif ()
+ if (APPLE)
+     set(LINK_LIBRARIES ${LINK_LIBRARIES} iconv)
+ endif ()
+diff --git a/src/Font.cpp b/src/Font.cpp
+index 8621e93..245f1a4 100644
+--- a/src/Font.cpp
++++ b/src/Font.cpp
+@@ -128,10 +128,12 @@ int Font::renderText(const std::string& text, int size, int x, int y, Color colo
+         {
+             if (c > ' ')
+             {
++                // 关键：按 size×size 缩放绘制。原来的 -1,-1 用字形原始尺寸，
++                // 遇到字宽 ≠ size 的字体会压到下一个字上（叠字）。
+                 Engine::getInstance()->setColor(tex, { uint8_t(color.r / 10), uint8_t(color.g / 10), uint8_t(color.b / 10), color.a });
+-                Engine::getInstance()->renderTexture(tex, x1 + 1, y1, -1, -1);
++                Engine::getInstance()->renderTexture(tex, x1 + 1, y1, size, size);
+                 Engine::getInstance()->setColor(tex, color);
+-                Engine::getInstance()->renderTexture(tex, x1, y1, -1, -1);
++                Engine::getInstance()->renderTexture(tex, x1, y1, size, size);
+             }
+         }
+         x += w;
+@@ -149,8 +151,16 @@ void Font::executeDrawCalls()
+ void Font::drawWithBox(const std::string& text, int size, int x, int y, Color color, uint8_t alpha, uint8_t alpha_box)
+ {
+     auto r = getBoxRect(getTextDrawSize(text), size, x, y);
+-    UIRenderer::getInstance()->drawTexture(TextureManager::getInstance()->getTexture("title", 126),
+-        r.x, r.y, { { 255, 255, 255, 255 }, alpha_box }, r.w, r.h);
++    auto box = TextureManager::getInstance()->getTexture("title", 126);
++    if (box)
++    {
++        UIRenderer::getInstance()->drawTexture(box, r.x, r.y, { { 255, 255, 255, 255 }, alpha_box }, r.w, r.h);
++    }
++    else
++    {
++        // 资源里没有菜单底板（title/126），用半透明黑底代替，否则浅字压亮背景会看不清
++        UIRenderer::getInstance()->fillColor({ 0, 0, 0, alpha_box }, r.x, r.y, r.w, r.h);
++    }
+     draw(text, size, x, y, color, alpha);
+ }
+ 
+diff --git a/src/PaperPresentation.cpp b/src/PaperPresentation.cpp
+index d27dcca..5a00cc5 100644
+--- a/src/PaperPresentation.cpp
++++ b/src/PaperPresentation.cpp
+@@ -1,4 +1,5 @@
+ #include "PaperPresentation.h"
++#include <cmath>
+ #include "DayNightSystem.h"
+ #include "Engine.h"
+ #include "Font.h"
+diff --git a/src/ParticleSystem.cpp b/src/ParticleSystem.cpp
+index ee6fff4..bcc122b 100644
+--- a/src/ParticleSystem.cpp
++++ b/src/ParticleSystem.cpp
+@@ -1,4 +1,5 @@
+ #include "ParticleSystem.h"
++#include <cmath>
+ #include "TextureManager.h"
+ #include <algorithm>
+ #include <string>
+diff --git a/src/ParticleSystem.h b/src/ParticleSystem.h
+index ab878c6..4cd6067 100644
+--- a/src/ParticleSystem.h
++++ b/src/ParticleSystem.h
+@@ -3,6 +3,7 @@
+ //移植自Cocos2dx，版权声明请查看licenses文件夹
+ 
+ #include "RunNode.h"
++#include <cmath>
+ #include <string>
+ #include <vector>
+ 
+diff --git a/src/RunNode.cpp b/src/RunNode.cpp
+index 28e3571..5a7d158 100644
+--- a/src/RunNode.cpp
++++ b/src/RunNode.cpp
+@@ -1,5 +1,6 @@
+ ﻿#include "RunNode.h"
+ #include "McpServer.h"
++#include <cmath>
+ #include "Audio.h"
+ #include "Font.h"
+ #include "GameUtil.h"
+diff --git a/src/TextBox.cpp b/src/TextBox.cpp
+index 4381010..bffa988 100644
+--- a/src/TextBox.cpp
++++ b/src/TextBox.cpp
+@@ -56,9 +56,26 @@ void TextBox::setTextColor(Color c1, Color c2, Color c3)
+ 
+ void TextBox::draw()
+ {
++    bool drew_texture = false;
+     if (!texture_path_.empty())
+     {
+-        TextureManager::getInstance()->renderTexture(texture_path_, texture_normal_id_, x_, y_, { { 255, 255, 255, 255 }, 255 });
++        auto tex = TextureManager::getInstance()->getTexture(texture_path_, texture_normal_id_);
++        if (tex)
++        {
++            TextureManager::getInstance()->renderTexture(texture_path_, texture_normal_id_, x_, y_, { { 255, 255, 255, 255 }, 255 });
++            drew_texture = true;
++        }
++    }
++    // 资源里没有对应的按钮贴图（title/1xx 那批现代 UI 图），就给文字按钮补一个半透明底，
++    // 否则既看不见也点不到（宽高为 0）。
++    if (!drew_texture && !text_.empty())
++    {
++        if (w_ * h_ == 0)
++        {
++            w_ = font_size_ * Font::getTextDrawSize(text_) / 2 + 8;
++            h_ = font_size_ + 6;
++        }
++        Engine::getInstance()->fillColor({ 0, 0, 0, 170 }, x_, y_, w_, h_);
+     }
+     if (have_alpha_box_)
+     {
+diff --git a/src/TextBox.h b/src/TextBox.h
+index f3ff9b6..500bd94 100644
+--- a/src/TextBox.h
++++ b/src/TextBox.h
+@@ -11,9 +11,9 @@ protected:
+     std::string text_ = "";
+     int font_size_ = 20;
+     int text_x_ = 0, text_y_ = 0;
+-    Color color_normal_ = { 32, 32, 32, 255 };
+-    Color color_pass_ = { 255, 255, 255, 255 };
+-    Color color_press_ = { 255, 255, 255, 255 };
++    Color color_normal_ = { 235, 235, 235, 255 };   // 原版是深色字配浅色底板，我们的资源没有那块底板，改浅色
++    Color color_pass_ = { 255, 230, 120, 255 };
++    Color color_press_ = { 255, 200, 80, 255 };
+     bool have_box_ = true;
+     bool have_alpha_box_ = false;
+     Color outline_color_;
+diff --git a/src/TitleScene.cpp b/src/TitleScene.cpp
+index 2163b98..2b2f509 100644
+--- a/src/TitleScene.cpp
++++ b/src/TitleScene.cpp
+@@ -42,9 +42,23 @@ TitleScene::TitleScene()
+     battle_mode_ = GameUtil::getInstance()->getInt("game", "battle_mode");
+     menu_ = std::make_shared<Menu>();
+     menu_->setPosition(560, 550);
+-    menu_->addChild<Button>(-180, 0)->setTexture("title", 3, 23, 23);
+-    menu_->addChild<Button>(20, 0)->setTexture("title", 4, 24, 24);
+-    menu_->addChild<Button>(220, 0)->setTexture("title", 6, 26, 26);
++    // DOS 版素材里没有「新遊戲／讀取進度／離開遊戲」这三张按钮图（原图是舊版的進度選單），
++    // 直接用文字画，避免图文错位。
++    {
++        auto b0 = menu_->addChild<Button>(-180, 0);
++        b0->setText("新 游 戏");
++        b0->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
++    }
++    {
++        auto b1 = menu_->addChild<Button>(20, 0);
++        b1->setText("读 取 进 度");
++        b1->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
++    }
++    {
++        auto b2 = menu_->addChild<Button>(220, 0);
++        b2->setText("离 开 游 戏");
++        b2->setTextColor({255, 255, 255, 255}, {255, 220, 130, 255}, {255, 200, 90, 255});
++    }
+     menu_load_ = std::make_shared<UISave>();
+     menu_load_->setPosition(500, 300);
+     //render_message_ = 1;
+@@ -112,7 +126,13 @@ void TitleScene::dealEvent(EngineEvent& e)
+     if (r == 0)
+     {
+         Engine::getInstance()->gameControllerRumble(50, 50, 500);
+-        Save::getInstance()->load(0);
++        // 没有默认存档时（用户删了 save/0.db），load 会返回 false，后面 getRole(0) 就是空指针。
++        // 这里提前挡掉，避免直接崩在 0xC0000005。
++        if (!Save::getInstance()->load(0) || Save::getInstance()->getRole(0) == nullptr)
++        {
++            LOG("没有可用的初始存档（save/0.db + allsin.grp + alldef.grp），无法开始新游戏");
++            return;
++        }
+         std::string name = "";
+         auto input = std::make_shared<InputBox>("請輸入姓名：", 30);
+         input->setInputPosition(350, 300);
+diff --git a/src/UI.cpp b/src/UI.cpp
+index 8b6c7f3..5a6a5db 100644
+--- a/src/UI.cpp
++++ b/src/UI.cpp
+@@ -6,15 +6,17 @@
+ 
+ UI::UI()
+ {
++    // 原版用 title/122、124、125 三张现代 UI 按钮图，DOS 资源里没有，
++    // 改成文字按钮（TextBox 会补半透明底），否则按钮宽高为 0，既看不见也点不到。
+     button_status_ = std::make_shared<Button>();
+-    button_status_->setTexture("title", 122);
+-    button_status_->setAlpha(192);
++    button_status_->setText("状态");
++    button_status_->setFontSize(20);
+     button_item_ = std::make_shared<Button>();
+-    button_item_->setTexture("title", 124);
+-    button_item_->setAlpha(192);
++    button_item_->setText("物品");
++    button_item_->setFontSize(20);
+     button_system_ = std::make_shared<Button>();
+-    button_system_->setTexture("title", 125);
+-    button_system_->setAlpha(192);
++    button_system_->setText("系统");
++    button_system_->setFontSize(20);
+     addChild(button_status_, 10, 10);
+     addChild(button_item_, 90, 10);
+     addChild(button_system_, 170, 10);
+@@ -55,7 +57,9 @@ void UI::onEntrance()
+ 
+ void UI::draw()
+ {
+-    //Engine::getInstance()->fillColor({ 0, 0, 0, 128 }, 0, 0, -1, -1);
++    // 原版的界面面板自带背景图（title/12x 那批），DOS 资源里没有，
++    // 这里统一压一层半透明黑，保证文字在场景上可读。
++    Engine::getInstance()->fillColor({ 0, 0, 0, 170 }, 0, 0, -1, -1);
+ }
+ 
+ void UI::dealEvent(EngineEvent& e)
+diff --git a/src/VirtualStick.cpp b/src/VirtualStick.cpp
+index d5b1fc0..045ecef 100644
+--- a/src/VirtualStick.cpp
++++ b/src/VirtualStick.cpp
+@@ -1,5 +1,6 @@
+ ﻿#include "VirtualStick.h"
+ #include "Button.h"
++#include <cmath>
+ #include "GameUtil.h"
+ #include "Menu.h"
+ #include "ShowExp.h"
+diff --git a/tools/abc/abc.cpp b/tools/abc/abc.cpp
+index 7298cf9..3b0da61 100644
+--- a/tools/abc/abc.cpp
++++ b/tools/abc/abc.cpp
+@@ -9,6 +9,7 @@
+ #include "ZipFile.h"
+ #include "filefunc.h"
+ #include "strfunc.h"
++#include <map>
+ #include <print>
+ #include <sqlite3.h>
+ 
+@@ -723,19 +724,51 @@ int expandR(std::string idx, std::string grp, int index, std::string path, bool
+         }
+ 
+         memcpy(&baseinfo_, rgrp2, sizeof(baseinfo16_));
+-        filefunc::readDataToVector(rgrp2 + offset32[1], length32[1], roles_);
++        // 角色必须逐字段转换：32 位的 RoleSave 比 16 位多出 InternalID/InternalLevel，
++        // 整块按 2 倍字节拷贝会让 HeadID/属性全部错位（396 != 182*2）。
++        roles_.clear();
++        roles_.resize(roles16_.size());
++        for (size_t i = 0; i < roles16_.size(); i++)
++        {
++            const auto& a = roles16_[i];
++            auto& b = roles_[i];
++            memset(&b, 0, sizeof(RoleSave));
++            b.ID = a.ID;
++            b.HeadID = a.HeadID;
++            b.IncLife = a.IncLife;
++            b.UnUse = a.UnUse;
++            PotConv::fromCP950ToUTF8(a.Name, b.Name);
++            PotConv::fromCP950ToUTF8(a.Nick, b.Nick);
++            b.Sexual = a.Sexual;
++            b.Level = a.Level;
++            b.Exp = a.Exp;
++            b.HP = a.HP;
++            b.MaxHP = a.MaxHP;
++            b.Hurt = a.Hurt;
++            b.Poison = a.Poison;
++            b.PhysicalPower = a.PhysicalPower;
++            b.ExpForMakeItem = a.ExpForMakeItem;
++            b.Equip0 = a.Equip0;
++            b.Equip1 = a.Equip1;
++            for (int k = 0; k < 6; k++) { b.Frame[k] = a.Frame[k]; }
++            b.MPType = a.MPType;
++            b.MP = a.MP;
++            b.MaxMP = a.MaxMP;
++            b.Attack = a.Attack; b.Speed = a.Speed; b.Defence = a.Defence;
++            b.Medicine = a.Medicine; b.UsePoison = a.UsePoison; b.Detoxification = a.Detoxification;
++            b.AntiPoison = a.AntiPoison; b.Fist = a.Fist; b.Sword = a.Sword; b.Knife = a.Knife;
++            b.Unusual = a.Unusual; b.HiddenWeapon = a.HiddenWeapon;
++            b.Knowledge = a.Knowledge; b.Morality = a.Morality; b.AttackWithPoison = a.AttackWithPoison;
++            b.AttackTwice = a.AttackTwice; b.Fame = a.Fame; b.IQ = a.IQ;
++            b.PracticeItem = a.PracticeItem;
++            b.ExpForItem = a.ExpForItem;
++            for (int k = 0; k < ROLE_MAGIC_COUNT; k++) { b.MagicID[k] = a.MagicID[k]; b.MagicLevel[k] = a.MagicLevel[k]; }
++            for (int k = 0; k < ROLE_TAKING_ITEM_COUNT; k++) { b.TakingItem[k] = a.TakingItem[k]; b.TakingItemCount[k] = a.TakingItemCount[k]; }
++        }
+         filefunc::readDataToVector(rgrp2 + offset32[2], length32[2], items_);
+         filefunc::readDataToVector(rgrp2 + offset32[3], length32[3], submapinfos_);
+         filefunc::readDataToVector(rgrp2 + offset32[4], length32[4], magics_);
+         filefunc::readDataToVector(rgrp2 + offset32[5], length32[5], shops_);
+-        //仅有包含名字的才需要特殊转换
+-        for (int i = 0; i < roles_.size(); i++)
+-        {
+-            memset(roles_[i].Name, 0, sizeof(roles_[i].Name));
+-            memset(roles_[i].Nick, 0, sizeof(roles_[i].Nick));
+-            PotConv::fromCP950ToUTF8(roles16_[i].Name, roles_[i].Name);
+-            PotConv::fromCP950ToUTF8(roles16_[i].Nick, roles_[i].Nick);
+-        }
+         for (int i = 0; i < items_.size(); i++)
+         {
+             memset(items_[i].Name, 0, sizeof(items_[i].Name));
+@@ -755,7 +788,7 @@ int expandR(std::string idx, std::string grp, int index, std::string path, bool
+         }
+         baseinfo_.Encode = 65001;
+         memcpy(rgrp2, &baseinfo_, sizeof(baseinfo_));
+-        filefunc::writeVectorToData(rgrp2 + offset32[1], length32[1], roles_, sizeof(RoleSave));
++        // roles_ 不写回 rgrp2：396*N > length32[1]，会越界；游戏只读 .db
+         filefunc::writeVectorToData(rgrp2 + offset32[2], length32[2], items_, sizeof(ItemSave));
+         filefunc::writeVectorToData(rgrp2 + offset32[3], length32[3], submapinfos_, sizeof(SubMapInfoSave));
+         filefunc::writeVectorToData(rgrp2 + offset32[4], length32[4], magics_, sizeof(MagicSave));
+diff --git a/tools/abc/main.cpp b/tools/abc/main.cpp
+index 99c9857..a771021 100644
+--- a/tools/abc/main.cpp
++++ b/tools/abc/main.cpp
+@@ -12,7 +12,7 @@
+ #include <windows.h>
+ #endif
+ 
+-int main()
++int main(int argc, char* argv[])
+ {
+     cmdline::parser cmd;
+ 

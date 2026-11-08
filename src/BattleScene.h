@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "BattleCursor.h"
+#include <cmath>
 #include "BattleMap.h"
 #include "BattleMenu.h"
 #include "Cloud.h"

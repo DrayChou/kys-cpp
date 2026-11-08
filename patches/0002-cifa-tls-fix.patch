@@ -1,0 +1,43 @@
+diff --git a/Cifa.h b/Cifa.h
+index 707125b..f19f2ea 100644
+--- a/Cifa.h
++++ b/Cifa.h
+@@ -351,26 +351,32 @@ private:
+ 
+     static void report_runtime_error(const std::string& message, const Object* source)
+     {
+-        if (!runtime_error_reporters.empty())
++        if (!runtime_error_reporters().empty())
+         {
+-            runtime_error_reporters.back()(message, source);
++            runtime_error_reporters().back()(message, source);
+         }
+     }
+ 
+     static void set_runtime_error_reporter(const std::function<void(const std::string&, const Object*)>& reporter)
+     {
+-        runtime_error_reporters.push_back(reporter);
++        runtime_error_reporters().push_back(reporter);
+     }
+ 
+     static void clear_runtime_error_reporter()
+     {
+-        if (!runtime_error_reporters.empty())
++        if (!runtime_error_reporters().empty())
+         {
+-            runtime_error_reporters.pop_back();
++            runtime_error_reporters().pop_back();
+         }
+     }
+ 
+-    inline static thread_local std::vector<std::function<void(const std::string&, const Object*)>> runtime_error_reporters;
++    // MinGW 下 inline static thread_local 的非平凡对象会在每个 TU 生成一份 TLS 初始化函数，
++    // 链接期报 multiple definition；改成函数内静态对象，保证全局唯一。
++    static std::vector<std::function<void(const std::string&, const Object*)>>& runtime_error_reporters()
++    {
++        static thread_local std::vector<std::function<void(const std::string&, const Object*)>> reporters;
++        return reporters;
++    }
+ 
+     std::any value;
+     std::type_index bound_type = typeid(void);

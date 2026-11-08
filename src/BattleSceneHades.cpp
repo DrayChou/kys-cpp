@@ -1,5 +1,6 @@
 ﻿#include "BattleSceneHades.h"
 #include "Audio.h"
+#include <cmath>
 #include "Event.h"
 #include "Font.h"
 #include "GameUtil.h"

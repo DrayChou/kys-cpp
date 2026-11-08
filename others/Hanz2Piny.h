@@ -3,6 +3,7 @@
 #ifndef HANZ2PINY_H
 #define HANZ2PINY_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

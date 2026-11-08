@@ -1,5 +1,6 @@
 ﻿#include "RunNode.h"
 #include "McpServer.h"
+#include <cmath>
 #include "Audio.h"
 #include "Font.h"
 #include "GameUtil.h"

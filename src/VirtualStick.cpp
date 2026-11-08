@@ -1,5 +1,6 @@
 ﻿#include "VirtualStick.h"
 #include "Button.h"
+#include <cmath>
 #include "GameUtil.h"
 #include "Menu.h"
 #include "ShowExp.h"

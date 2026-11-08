@@ -3,6 +3,7 @@
 //移植自Cocos2dx，版权声明请查看licenses文件夹
 
 #include "RunNode.h"
+#include <cmath>
 #include <string>
 #include <vector>
 

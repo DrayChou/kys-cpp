@@ -1,4 +1,5 @@
 #include "PaperPresentation.h"
+#include <cmath>
 #include "DayNightSystem.h"
 #include "Engine.h"
 #include "Font.h"

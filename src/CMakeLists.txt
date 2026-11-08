@@ -73,6 +73,9 @@ file(GLOB SRC_LIST
     )
 
 set(LINK_LIBRARIES SDL3 SDL3_ttf SDL3_image SDL3_mixer sqlite3 yaml-cpp)
+if (MINGW)
+    set(LINK_LIBRARIES ${LINK_LIBRARIES} iconv)
+endif ()
 if (APPLE)
     set(LINK_LIBRARIES ${LINK_LIBRARIES} iconv)
 endif ()

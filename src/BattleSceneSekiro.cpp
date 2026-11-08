@@ -1,5 +1,6 @@
 ﻿#include "BattleSceneSekiro.h"
 #include "Audio.h"
+#include <cmath>
 #include "Event.h"
 #include "GameUtil.h"
 #include "MainScene.h"

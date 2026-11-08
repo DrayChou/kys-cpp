@@ -1,4 +1,5 @@
 #include "ParticleSystem.h"
+#include <cmath>
 #include "TextureManager.h"
 #include <algorithm>
 #include <string>

@@ -1,4 +1,5 @@
 #include "BattleSceneAct.h"
+#include <cmath>
 #include "GameUtil.h"
 #include "filefunc.h"
 #include <limits>

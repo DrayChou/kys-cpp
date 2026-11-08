@@ -35,3 +35,16 @@ vcpkg_installed
 tools/__pycache__
 *.apk
 kys-cpp-androidstudio/libkys_cpp.so
+
+# ---- 本地移植 / 运行相关（不入库）----
+# game/ 是转换出来的游戏资源（70MB+），用 tools_local 的脚本现场生成
+game/
+dist/
+glaze/
+src/build/
+*.exe
+*.dll
+*.log
+out*.txt
+err*.txt
+game_err.txt
