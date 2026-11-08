@@ -132,8 +132,11 @@ game/
 ```bash
 export DOS_DATA=~/kys-dos-data        # 里面是 KDEF.GRP / TALK.GRP / FIGHT*.GRP / *.002 ...
 
-# 1) 贴图 + 对话（纯 Python，跨平台）
-python3 tools_local/convert_dos_res.py     # 脚本里 DOS/JYOL/OUT 三个路径按需改
+# 1) 贴图 + 对话 + 标题背景（纯 Python，跨平台，参数都是显式传的）
+python3 tools_local/convert_dos_res.py \
+    --dos  "$DOS_DATA" \
+    --jyol ~/jyol-assets/data \
+    --out  ./game/resource
 
 # 2) 存档 16→32 位（需要编译 abc）
 brew install libzip                        # macOS 上可以直接用真正的 ZipFile.cpp
@@ -153,10 +156,11 @@ tools/abc/abc --save -p game/resource/fight/
 rm game/resource/fight/ranger.* game/resource/fight/0.db
 
 # 5) 音乐（DOS 的 XMIDI -> 标准 MIDI）
-python3 tools_local/xmi2mid.py
+python3 tools_local/xmi2mid.py --dos "$DOS_DATA" --out ./game/music
 ```
 
-> 第 1、5 步的脚本里路径是写死的（`E:\Games\...`），Mac 上跑之前把 `DOS` / `JYOL` / `OUT` 三个变量改成你的路径。
+> 两个脚本都支持 `--dos / --jyol / --out`，不传则用脚本里的 Windows 默认路径。
+> `--jyol` 是补 `smap.grp`（场景图）和 `thing.grp`（物品图标）用的，没有的话这两块会缺。
 
 ### 5.1 大小写敏感卷的坑
 

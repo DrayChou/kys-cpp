@@ -11,11 +11,12 @@
   - 下一字节 >= 0x80       → 先按「这是状态字节（delta=0）」试，
                             若它的数据字节里出现 >= 0x80，才判定为两字节 delta
 """
+import argparse
 import os
 import struct
 
 DOS = r"E:\Games\kys-dos-data"
-OUT = r"E:\Games\kys-cpp\game\music"
+OUT = r"E:\Games\kys-cpp\game\music"   # 默认值，可用 --dos / --out 覆盖
 
 CHANNEL_VALID = set(range(0x80, 0xF0)) | {0xF0, 0xF7, 0xFF}
 
@@ -127,6 +128,12 @@ def xmi_to_mid(data):
 
 
 def main():
+    global DOS, OUT
+    ap = argparse.ArgumentParser(description="DOS 版 XMIDI -> 标准 MIDI")
+    ap.add_argument("--dos", default=DOS, help="含 GAME01.XMI.. 的目录")
+    ap.add_argument("--out", default=OUT, help="输出目录（游戏的 game/music）")
+    args = ap.parse_args()
+    DOS, OUT = args.dos, args.out
     os.makedirs(OUT, exist_ok=True)
     ok = 0
     for f in sorted(os.listdir(DOS)):

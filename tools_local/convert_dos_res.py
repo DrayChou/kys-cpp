@@ -2,8 +2,12 @@
 kys-cpp 资源转换：把 DOS 版《金庸群侠传》的 GRP/IDX 转成复刻版需要的 PNG 贴图组 + index.ka，
 并把 TALK.GRP 转成 talkutf8.txt。
 
-用法: python convert.py
+用法:
+  python3 convert_dos_res.py --dos <DOS数据目录> --jyol <jyol数据目录> --out <game/resource>
+
+  不给参数时用脚本里的默认路径（Windows 本机路径）。
 """
+import argparse
 import os
 import struct
 import sys
@@ -231,7 +235,55 @@ def convert_fights():
     print("  战斗贴图共 %d 张" % n)
 
 
+def make_title_background():
+    """TITLE.BIG(320x200 8位) + MMAP.COL -> title/153.png、154.png（游戏要的 1024x640 标题背景）"""
+    src = os.path.join(DOS, "TITLE.BIG")
+    if not os.path.exists(src):
+        src = os.path.join(DOS, "title.big")
+    if not os.path.exists(src):
+        print("  跳过标题背景（没有 TITLE.BIG）")
+        return
+    raw = open(src, "rb").read()
+    W, H = 320, 200
+    if len(raw) < W * H:
+        print("  跳过标题背景（TITLE.BIG 尺寸不对）")
+        return
+    SW, SH = 1024, 640
+    buf = bytearray(SW * SH * 4)
+    for y in range(SH):
+        sy = y * H // SH
+        base = sy * W
+        row = y * SW
+        for x in range(SW):
+            c = PALETTE[raw[base + (x * W // SW)]]
+            o = (row + x) * 4
+            buf[o] = c[0]
+            buf[o + 1] = c[1]
+            buf[o + 2] = c[2]
+            buf[o + 3] = 255
+    out = os.path.join(OUT, "title")
+    os.makedirs(out, exist_ok=True)
+    for name in ("153.png", "154.png"):
+        write_png(os.path.join(out, name), SW, SH, buf)
+    print("  TITLE.BIG -> title/153.png、154.png（%dx%d）" % (SW, SH))
+
+
 def main():
+    global DOS, JYOL, OUT
+    ap = argparse.ArgumentParser(description="DOS 版金庸群侠传资源 -> kys-cpp 资源目录")
+    ap.add_argument("--dos", default=DOS, help="DOS 原版数据目录（含 KDEF.GRP/TALK.GRP/MMAP.COL/*.002）")
+    ap.add_argument("--jyol", default=JYOL, help="jyol 数据目录（补 smap.grp / thing.grp，可缺省）")
+    ap.add_argument("--out", default=OUT, help="输出目录（游戏的 game/resource）")
+    args = ap.parse_args()
+    DOS, JYOL, OUT = args.dos, args.jyol, args.out
+
+    if not os.path.isdir(DOS):
+        sys.exit("找不到 DOS 数据目录：%s（用 --dos 指定）" % DOS)
+    if not os.path.isfile(os.path.join(DOS, "TALK.GRP")) and not os.path.isfile(os.path.join(DOS, "talk.grp")):
+        print("警告：%s 里没有 TALK.GRP/talk.grp，对话将不会生成" % DOS)
+    if not os.path.isdir(JYOL):
+        print("提示：没有 --jyol 目录，smap（场景图）和 item（物品图标）会缺失")
+
     load_palette()
     os.makedirs(OUT, exist_ok=True)
 
@@ -255,6 +307,8 @@ def main():
     convert_group(os.path.join(DOS, "EFT.IDX"), os.path.join(DOS, "EFT.GRP"), os.path.join(OUT, "eft"))
 
     convert_fights()
+
+    make_title_background()
 
     print("[3/3] 转换对话")
     convert_talk()
