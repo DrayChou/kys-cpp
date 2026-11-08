@@ -6,6 +6,17 @@
 #include "TextureManager.h"
 #include "strfunc.h"
 
+// 按"显示宽度"补空格（CJK=2、ASCII=1），保证多行文本列对齐
+static std::string pad_units(const std::string& s, int units)
+{
+    int w = Font::getTextDrawSize(s);
+    if (w >= units)
+    {
+        return s;
+    }
+    return s + std::string(units - w, ' ');
+}
+
 UIShop::UIShop()
 {
     plan_buy_.resize(SHOP_ITEM_COUNT, 0);
@@ -18,14 +29,21 @@ UIShop::UIShop()
         text->setTextColor(SHOP_TEXT_COLOR, SHOP_TEXT_ACTIVE_COLOR, SHOP_TEXT_ACTIVE_COLOR);
         addChild(text, 0, 30 + SHOP_ROW_HEIGHT * i);
 
+        // 原版用 title/104、105 两张箭头图，DOS 资源里没有，改成文字
         auto button_left = std::make_shared<Button>();
-        text->addChild(button_left, 36 * 12 + 36, 5);
-        button_left->setTexture("title", 104);
+        text->addChild(button_left, 36 * 12 + 36, 2);
+        button_left->setText("<");
+        button_left->setFontSize(20);
+        button_left->setHaveBox(false);
+        button_left->setTextColor({ 220, 220, 220, 255 }, { 255, 220, 130, 255 }, { 255, 200, 90, 255 });
         buttons_.push_back(button_left);
 
         auto button_right = std::make_shared<Button>();
-        text->addChild(button_right, 36 * 12 + 108, 5);
-        button_right->setTexture("title", 105);
+        text->addChild(button_right, 36 * 12 + 108, 2);
+        button_right->setText(">");
+        button_right->setFontSize(20);
+        button_right->setHaveBox(false);
+        button_right->setTextColor({ 220, 220, 220, 255 }, { 255, 220, 130, 255 }, { 255, 200, 90, 255 });
         buttons_.push_back(button_right);
     }
     button_ok_ = std::make_shared<Button>();
@@ -65,17 +83,30 @@ void UIShop::draw()
     std::string str;
     auto font = Font::getInstance();
 
-    TextureManager::getInstance()->renderTexture("title", 126, x + SHOP_BOX_X, y + SHOP_BOX_Y, { { 255, 255, 255, 255 }, 255 }, SHOP_BOX_WIDTH, SHOP_BOX_HEIGHT);
+    if (textureReady("title", 126))
+    {
+        TextureManager::getInstance()->renderTexture("title", 126, x + SHOP_BOX_X, y + SHOP_BOX_Y, { { 255, 255, 255, 255 }, 255 }, SHOP_BOX_WIDTH, SHOP_BOX_HEIGHT);
+    }
+    else
+    {
+        // 没有菜单底板贴图，用深色实底代替，否则表格压在场景上看不清
+        Engine::getInstance()->fillColor({ 0, 0, 0, 210 }, x + SHOP_BOX_X, y + SHOP_BOX_Y, SHOP_BOX_WIDTH, SHOP_BOX_HEIGHT);
+    }
 
-    str = "品名             價格    存貨    持有    計劃";
+    // 注意：CJK 字符在 Font 里占 2 个单位，ASCII 占 1 个，所以必须按显示宽度补空格，
+    // 不能用 std::format 的宽度（它按字符数算），否则表头和数据列对不上。
+    str = pad_units("品名", 14) + pad_units("價格", 8) + pad_units("存貨", 8) + pad_units("持有", 8) + pad_units("計劃", 8);
     font->draw(str, 24, x, y, { 200, 150, 50, 255 });
 
     for (int i = 0; i < 5; i++)
     {
         auto item = Save::getInstance()->getItem(shop_->ItemID[i]);
         int count = Save::getInstance()->getItemCountInBag(item->ID);
-        str = std::string(item->Name) + std::string(abs(12 - Font::getTextDrawSize(item->Name)), ' ');
-        str += std::format("{:8}{:8}{:8}{:8}", shop_->Price[i], shop_->Total[i], count, plan_buy_[i]);
+        str = pad_units(item->Name, 14)
+            + pad_units(std::to_string(shop_->Price[i]), 8)
+            + pad_units(std::to_string(shop_->Total[i]), 8)
+            + pad_units(std::to_string(count), 8)
+            + pad_units(std::to_string(plan_buy_[i]), 8);
         //str = std::format("{:12}{:8}{:8}{:8}{:8}", item->Name, shop_->Price[i], shop_->Total[i], count, plan_buy_[i]);
         //std::string m = PotConv::utf8tocp936((char*)str1.c_str());
         //std::cout << m << "\n";

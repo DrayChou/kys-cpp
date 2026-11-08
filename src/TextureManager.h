@@ -101,3 +101,13 @@ public:
     void setLoadFromPath(int l) { load_from_path_ = l; }
     void setLoadAll(int l) { load_all_ = l; }
 };
+
+// 判断某张 UI 贴图是否真的存在（组里编号存在不代表图片存在，DOS 资源大量缺图）。
+// 注意 getTexture 只返回包装对象，真正加载要调 load()。
+inline bool textureReady(const std::string& path, int num)
+{
+    auto t = TextureManager::getInstance()->getTexture(path, num);
+    if (!t) { return false; }
+    t->load();
+    return t->w > 0 && t->h > 0;
+}

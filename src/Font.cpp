@@ -151,10 +151,10 @@ void Font::executeDrawCalls()
 void Font::drawWithBox(const std::string& text, int size, int x, int y, Color color, uint8_t alpha, uint8_t alpha_box)
 {
     auto r = getBoxRect(getTextDrawSize(text), size, x, y);
-    auto box = TextureManager::getInstance()->getTexture("title", 126);
-    if (box)
+    if (textureReady("title", 126))
     {
-        UIRenderer::getInstance()->drawTexture(box, r.x, r.y, { { 255, 255, 255, 255 }, alpha_box }, r.w, r.h);
+        UIRenderer::getInstance()->drawTexture(TextureManager::getInstance()->getTexture("title", 126),
+            r.x, r.y, { { 255, 255, 255, 255 }, alpha_box }, r.w, r.h);
     }
     else
     {

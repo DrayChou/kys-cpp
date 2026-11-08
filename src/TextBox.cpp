@@ -59,8 +59,7 @@ void TextBox::draw()
     bool drew_texture = false;
     if (!texture_path_.empty())
     {
-        auto tex = TextureManager::getInstance()->getTexture(texture_path_, texture_normal_id_);
-        if (tex)
+        if (textureReady(texture_path_, texture_normal_id_))
         {
             TextureManager::getInstance()->renderTexture(texture_path_, texture_normal_id_, x_, y_, { { 255, 255, 255, 255 }, 255 });
             drew_texture = true;
@@ -68,7 +67,7 @@ void TextBox::draw()
     }
     // 资源里没有对应的按钮贴图（title/1xx 那批现代 UI 图），就给文字按钮补一个半透明底，
     // 否则既看不见也点不到（宽高为 0）。
-    if (!drew_texture && !text_.empty())
+    if (!drew_texture && !text_.empty() && have_box_)
     {
         if (w_ * h_ == 0)
         {
